@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import Footer from "@/components/Footer";
 import MoodSelector, { NO_MOOD } from "@/components/MoodSelector";
 import SearchFilter from "@/components/SearchFilter";
 import MovieCard from "@/components/MovieCard";
@@ -148,6 +149,7 @@ export default function Home() {
           </div>
         )}
       </section>
+      <Footer/>
     </main>
   );
 }
