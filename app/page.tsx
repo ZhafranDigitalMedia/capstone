@@ -13,11 +13,11 @@ import { recommendMoviesByAI } from "@/lib/mlRecommender";
 export default function Home() {
   // null = "By Title" mode (no mood)
   const [selectedMood, setSelectedMood] = useState<any>(moods[2]);
-  const [movies, setMovies]     = useState<any[]>([]);
-  const [loading, setLoading]   = useState(false);
-  const [search, setSearch]     = useState("");
-  const [rating, setRating]     = useState(7);
-  
+  const [movies, setMovies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [rating, setRating] = useState(7);
+
   const isMoodSelected = !!selectedMood?.nama;
 
   /**
@@ -30,59 +30,43 @@ export default function Home() {
    */
   const runFetch = async (titleOverride?: string) => {
     const titleQuery = titleOverride !== undefined ? titleOverride : search;
-    const moodQuery  = selectedMood?.query ?? "";
-    const hasMood    = !!moodQuery;
-    const hasTitle   = titleQuery.trim().length > 0;
+    const moodQuery = selectedMood?.query ?? "";
+    const hasMood = !!moodQuery;
+    const hasTitle = titleQuery.trim().length > 0;
 
     let mode: "mood" | "title" | "mood+title";
-    if (hasMood && hasTitle)       mode = "mood+title";
+    if (hasMood && hasTitle) mode = "mood+title";
     else if (!hasMood && hasTitle) mode = "title";
-    else                           mode = "mood";
+    else mode = "mood";
 
     // AI ranking context text
     const aiContext =
       hasMood && hasTitle
         ? `${selectedMood!.nama} ${titleQuery}`
         : hasMood
-        ? selectedMood!.nama
-        : titleQuery || "popular movies";
+          ? selectedMood!.nama
+          : titleQuery || "popular movies";
 
-   try {
-  setLoading(true);
+    try {
+      setLoading(true);
 
-  const rawMovies =
-    await fetchMovies({
-      mode,
-      moodQuery,
-      titleQuery,
-      rating
-    });
+      const rawMovies = await fetchMovies({
+        mode,
+        moodQuery,
+        titleQuery,
+        rating,
+      });
 
-  const aiRanked =
-    await recommendMoviesByAI(
-      aiContext,
-      rawMovies
-    );
+      const aiRanked = await recommendMoviesByAI(aiContext, rawMovies);
 
-  setMovies(aiRanked);
+      setMovies(aiRanked);
 
-  localStorage.setItem(
-    "loaded_movies",
-    JSON.stringify(aiRanked)
-  );
-
-} catch (err) {
-
-  console.error(
-    "Fetch Error:",
-    err
-  );
-
-} finally {
-
-  setLoading(false);
-
-}
+      localStorage.setItem("loaded_movies", JSON.stringify(aiRanked));
+    } catch (err) {
+      console.error("Fetch Error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Re-fetch whenever mood changes; clear search box on mood switch
@@ -90,19 +74,33 @@ export default function Home() {
     setSearch("");
     runFetch("");
   }, [selectedMood]);
-  
+
   // Rating slider re-filters client-side (no re-fetch needed)
   const filteredMovies = movies.filter(
-    (m) => Number(m.imdbRating || 0) >= rating
+    (m) => Number(m.imdbRating || 0) >= rating,
   );
 
   // Section heading text
-  const headingLabel = isMoodSelected
-    ? <>Recommendations for Mood: <span className="text-pink-400 ml-2">{selectedMood.nama}</span></>
-    : <>Search Results{search ? <span className="text-pink-400 ml-2">"{search}"</span> : <span className="text-gray-400 ml-2 text-2xl">— type a title above</span>}</>;
+  const headingLabel = isMoodSelected ? (
+    <>
+      Recommendations for Mood:{" "}
+      <span className="text-pink-400 ml-2">{selectedMood.nama}</span>
+    </>
+  ) : (
+    <>
+      Search Results
+      {search ? (
+        <span className="text-pink-400 ml-2">"{search}"</span>
+      ) : (
+        <span className="text-gray-400 ml-2 text-2xl">
+          — type a title above
+        </span>
+      )}
+    </>
+  );
 
   return (
-    <main className="min-h-screen pt-24 bg-gradient-to-b from-[#0b1026] to-[#480D82] text-white">
+    <main className="min-h-screen pt-28 sm:pt-24 bg-gradient-to-b from-[#0b1026] to-[#480D82] text-white">
       <Navbar />
       <Hero />
 
@@ -121,24 +119,29 @@ export default function Home() {
         onSearch={() => runFetch(search)}
       />
 
-      <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <h3 className="text-3xl font-bold">{headingLabel}</h3>
-          <p className="text-gray-300">{filteredMovies.length} movies found</p>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <h3 className="text-2xl sm:text-3xl font-bold leading-snug">
+            {headingLabel}
+          </h3>
+
+          <p className="text-sm sm:text-base text-gray-300">
+            {filteredMovies.length} movies found
+          </p>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-2xl font-bold">
+          <div className="text-center py-16 sm:py-20 text-xl sm:text-2xl font-bold">
             Loading Content with AI...
           </div>
         ) : filteredMovies.length === 0 ? (
-          <div className="text-center py-20 text-gray-400 text-lg">
+          <div className="text-center py-16 sm:py-20 text-gray-400 text-base sm:text-lg px-4">
             {!isMoodSelected && !search
               ? "Select a mood or type a title to start discovering movies 🎬"
               : "No movies found. Try a different keyword or lower the minimum rating."}
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-8">
             {filteredMovies.map((movie) => (
               <MovieCard key={movie.imdbID} movie={movie} />
             ))}
